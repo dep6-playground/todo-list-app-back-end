@@ -1,9 +1,9 @@
 package lk.ijse.dep.web.api;
 
-import dto.TodoItemDTO;
+import lk.ijse.dep.web.dto.TodoItemDTO;
 import org.apache.commons.dbcp2.BasicDataSource;
-import util.Priority;
-import util.Status;
+import lk.ijse.dep.web.util.Priority;
+import lk.ijse.dep.web.util.Status;
 
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
@@ -26,7 +26,7 @@ public class TodoItemServlet extends HttpServlet {
         Jsonb jsonb = JsonbBuilder.create();
         if (request.getPathInfo() == null || request.getPathInfo().equals("/")) {
             try (Connection connection = cp.getConnection()) {
-                request.setAttribute("user", "admin");
+//                request.setAttribute("user", "admin");
                 PreparedStatement pstm = connection.
                         prepareStatement("SELECT * FROM todo_item WHERE username = ?");
                 pstm.setObject(1, request.getAttribute("user"));
@@ -48,7 +48,7 @@ public class TodoItemServlet extends HttpServlet {
         } else {
             try (Connection connection = cp.getConnection() ) {
                 int id = Integer.parseInt(request.getPathInfo().replace("/", ""));
-                request.setAttribute("user","admin");
+//                request.setAttribute("user","admin");
                 PreparedStatement pstm = connection.
                         prepareStatement("SELECT * FROM todo_item WHERE id=? AND username=?");
                 pstm.setObject(1, id);

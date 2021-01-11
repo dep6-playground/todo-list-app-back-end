@@ -1,9 +1,10 @@
 package lk.ijse.dep.web.api;
 
-import dto.UserDTO;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lk.ijse.dep.web.dto.UserDTO;
+import lk.ijse.dep.web.util.AppUtil;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
 
@@ -51,8 +52,7 @@ public class UserServlet extends HttpServlet {
                         String sha256Hex = DigestUtils.sha256Hex(userDTO.getPassword());
                         if (sha256Hex.equals(rst.getString("password"))){
 
-                            String secretString = "we-are-FROM-dep6-2021-abc-123121231231231231test-bla-bla";
-                            SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64URL.decode(secretString));
+                            SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64URL.decode(AppUtil.getAppSecretKey()));
                             String jws = Jwts.builder()
                                     .setIssuer("ijse")
                                     .setExpiration(new Date(System.currentTimeMillis() + (1000 * 60 * 60 * 24)))

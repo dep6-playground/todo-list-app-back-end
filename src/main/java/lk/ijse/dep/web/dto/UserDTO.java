@@ -1,4 +1,4 @@
-package dto;
+package lk.ijse.dep.web.dto;
 
 import java.io.Serializable;
 

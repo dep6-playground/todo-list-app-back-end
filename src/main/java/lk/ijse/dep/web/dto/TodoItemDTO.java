@@ -1,7 +1,7 @@
-package dto;
+package lk.ijse.dep.web.dto;
 
-import util.Priority;
-import util.Status;
+import lk.ijse.dep.web.util.Priority;
+import lk.ijse.dep.web.util.Status;
 
 import java.io.Serializable;
 
