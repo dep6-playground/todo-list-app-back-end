@@ -56,7 +56,6 @@ public class TodoItemServlet extends HttpServlet {
                 ResultSet rst = pstm.executeQuery();
                 if (!rst.next()){
                     response.sendError(HttpServletResponse.SC_NOT_FOUND);
-                    return;
                 }else{
                     response.setContentType("application/json");
                     TodoItemDTO item = new TodoItemDTO(rst.getInt("id"),

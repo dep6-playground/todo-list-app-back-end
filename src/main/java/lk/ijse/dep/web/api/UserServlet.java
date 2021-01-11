@@ -1,21 +1,29 @@
 package lk.ijse.dep.web.api;
 
 import dto.UserDTO;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.dbcp2.BasicDataSource;
 
+import javax.crypto.SecretKey;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 import javax.json.bind.JsonbException;
-import javax.servlet.*;
-import javax.servlet.http.*;
-import javax.servlet.annotation.*;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 
-@WebServlet(name = "UserServlet", urlPatterns = "/api/v1/users/*")
+@WebServlet(name = "UserServlet", urlPatterns = {"/api/v1/users/*","/api/v1/auth"})
 public class UserServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -33,21 +41,52 @@ public class UserServlet extends HttpServlet {
             }
             BasicDataSource cp = (BasicDataSource) getServletContext().getAttribute("cp");
             try (Connection connection = cp.getConnection()) {
-                PreparedStatement pstm = connection.prepareStatement("SELECT * FROM `user` WHERE username=?");
-                pstm.setObject(1, userDTO.getUsername());
-                if (pstm.executeQuery().next()){
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    response.getWriter().println("User already exists");
-                    return;
-                }
-                pstm = connection.prepareStatement("INSERT INTO `user` VALUES (?,?)");
-                pstm.setObject(1, userDTO.getUsername());
-                String sha256Hex = DigestUtils.sha256Hex(userDTO.getPassword());
-                pstm.setObject(2, sha256Hex);
-                if (pstm.executeUpdate()> 0){
-                    response.setStatus(HttpServletResponse.SC_CREATED);
-                }else{
-                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+
+                if (request.getServletPath().equals("/api/v1/auth")){
+                    PreparedStatement pstm = connection.
+                            prepareStatement("SELECT * FROM `user` WHERE username=?");
+                    pstm.setObject(1, userDTO.getUsername());
+                    ResultSet rst = pstm.executeQuery();
+                    if (rst.next()){
+                        String sha256Hex = DigestUtils.sha256Hex(userDTO.getPassword());
+                        if (sha256Hex.equals(rst.getString("password"))){
+
+                            String secretString = "we-are-FROM-dep6-2021-abc-123121231231231231test-bla-bla";
+                            SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64URL.decode(secretString));
+                            String jws = Jwts.builder()
+                                    .setIssuer("ijse")
+                                    .setExpiration(new Date(System.currentTimeMillis() + (1000 * 60 * 60 * 24)))
+                                    .setIssuedAt(new Date())
+                                    .claim("name", userDTO.getUsername())
+                                    .signWith(key)
+                                    .compact();
+
+                            response.setContentType("text/plain");
+                            response.getWriter().println(jws);
+
+                        }else{
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                        }
+                    }else{
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                    }
+                }else {
+                    PreparedStatement pstm = connection.prepareStatement("SELECT * FROM `user` WHERE username=?");
+                    pstm.setObject(1, userDTO.getUsername());
+                    if (pstm.executeQuery().next()) {
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        response.getWriter().println("User already exists");
+                        return;
+                    }
+                    pstm = connection.prepareStatement("INSERT INTO `user` VALUES (?,?)");
+                    pstm.setObject(1, userDTO.getUsername());
+                    String sha256Hex = DigestUtils.sha256Hex(userDTO.getPassword());
+                    pstm.setObject(2, sha256Hex);
+                    if (pstm.executeUpdate() > 0) {
+                        response.setStatus(HttpServletResponse.SC_CREATED);
+                    } else {
+                        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                    }
                 }
             } catch (SQLException throwables) {
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
