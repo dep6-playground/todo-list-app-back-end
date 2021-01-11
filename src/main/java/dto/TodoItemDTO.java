@@ -6,16 +6,16 @@ import util.Status;
 import java.io.Serializable;
 
 public class TodoItemDTO implements Serializable {
-    private int id;
+    private Integer id;
     private String text;
-    private Priority priority;
-    private Status status;
+    private Priority priority = Priority.PRIORITY1;
+    private Status status = Status.NOT_COMPLETED;
     private String username;
 
     public TodoItemDTO() {
     }
 
-    public TodoItemDTO(int id, String text, Priority priority, Status status, String username) {
+    public TodoItemDTO(Integer id, String text, Priority priority, Status status, String username) {
         this.id = id;
         this.text = text;
         this.priority = priority;
@@ -23,11 +23,11 @@ public class TodoItemDTO implements Serializable {
         this.username = username;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
