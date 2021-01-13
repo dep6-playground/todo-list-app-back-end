@@ -25,7 +25,10 @@ public class SecurityFilter extends HttpFilter {
             chain.doFilter(req,res);
         }else if (req.getServletPath().equals("/api/v1/auth") && req.getMethod().equals("POST")) {
             chain.doFilter(req, res);
-        }else if(req.getServletPath().equals("/api/v1/users") && req.getMethod().equals("POST")){
+        }else if(req.getServletPath().equals("/api/v1/users") && req.getMethod().equals("POST")) {
+            chain.doFilter(req, res);
+        }else if(req.getServletPath().equals("/api/v1/users") && req.getMethod().equals("GET")
+                && req.getParameter("q") != null){
             chain.doFilter(req, res);
         } else {
             String authorization = req.getHeader("Authorization");

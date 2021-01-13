@@ -28,7 +28,25 @@ import java.util.Date;
 public class UserServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
+        String query = request.getParameter("q");
+        if (query != null){
+            BasicDataSource cp = (BasicDataSource) getServletContext().getAttribute("cp");
+            try (Connection connection = cp.getConnection()) {
+                PreparedStatement pstm = connection.prepareStatement("SELECT username FROM `user` WHERE username = ?");
+                pstm.setObject(1, query);
+                ResultSet rst = pstm.executeQuery();
+                if (rst.next()){
+                    Jsonb jsonb = JsonbBuilder.create();
+                    response.setContentType("application/json");
+                    response.getWriter().println(jsonb.toJson(rst.getString("username")));
+                }else{
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                }
+            } catch (SQLException throwables) {
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                throwables.printStackTrace();
+            }
+        }
     }
 
     @Override
