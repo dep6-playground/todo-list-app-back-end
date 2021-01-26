@@ -117,4 +117,21 @@ public class TodoItemServlet extends HttpServlet {
         }
 
     }
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        BasicDataSource cp = (BasicDataSource) getServletContext().getAttribute("cp");
+        Jsonb jsonb = JsonbBuilder.create();
+        String id = req.getHeader("Id");
+        try(Connection connection = cp.getConnection()){
+            PreparedStatement pstm = connection.prepareStatement("DELETE FROM todo_item WHERE id=?");
+            pstm.setObject(1,id);
+            if(pstm.executeUpdate()>0){
+                resp.setContentType("application/json");
+                resp.getWriter().println(jsonb.toJson(true));
+            }
+        } catch (SQLException e){
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
 }
