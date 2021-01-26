@@ -119,6 +119,46 @@ public class TodoItemServlet extends HttpServlet {
     }
 
     @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        Jsonb jsonb = JsonbBuilder.create();
+        try {
+            TodoItemDTO item = jsonb.fromJson(req.getReader(), TodoItemDTO.class);
+            if (item.getId() == null || item.getText() == null || item.getUsername() == null ||
+                    item.getText().trim().isEmpty() || item.getUsername().trim().isEmpty()) {
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
+            BasicDataSource cp = (BasicDataSource) getServletContext().getAttribute("cp");
+            try (Connection connection = cp.getConnection()) {
+                PreparedStatement pstm = connection.prepareStatement("SELECT * FROM `user` WHERE username = ?");
+                pstm.setObject(1, item.getUsername());
+                if (!pstm.executeQuery().next()) {
+                    resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    resp.setContentType("text/plain");
+                    resp.getWriter().println("Invalid user");
+                    return;
+                }
+                pstm = connection.prepareStatement("UPDATE todo_item SET `text`=?, `priority`=?, `status`=? WHERE id=? AND username=?");
+                pstm.setObject(1, item.getText());
+                pstm.setObject(2, item.getPriority().toString());
+                pstm.setObject(3, item.getStatus().toString());
+                pstm.setObject(4, item.getId());
+                pstm.setObject(5, item.getUsername());
+                if (pstm.executeUpdate() > 0) {
+                    resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                    resp.setContentType("application/json");
+                    resp.getWriter().println(jsonb.toJson(true));
+                } else {
+                    resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                }
+            }
+        } catch (JsonbException | SQLException e) {
+            e.printStackTrace();
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         BasicDataSource cp = (BasicDataSource) getServletContext().getAttribute("cp");
         Jsonb jsonb = JsonbBuilder.create();
@@ -129,6 +169,8 @@ public class TodoItemServlet extends HttpServlet {
             if(pstm.executeUpdate()>0){
                 resp.setContentType("application/json");
                 resp.getWriter().println(jsonb.toJson(true));
+            }else {
+                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
         } catch (SQLException e){
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
